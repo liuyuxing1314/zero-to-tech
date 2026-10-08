@@ -19,6 +19,7 @@ export default function InputCard({ onResult }) {
 
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", 
         body: JSON.stringify({ text }),
       });
 
