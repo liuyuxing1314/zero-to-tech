@@ -3,10 +3,15 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from pypinyin import lazy_pinyin, Style
 from snownlp import SnowNLP
+from storage import save_record, get_history,init_db
+from datetime import datetime, timezone
+
+
 
 
 
 app = FastAPI()
+init_db()  # 初始化数据库，创建表格
 
 app.add_middleware(
     CORSMiddleware,
@@ -49,10 +54,19 @@ def score_label(score):
 def analyze(req: AnalyzeRequest):
     text = req.text
     score = round(SnowNLP(text).sentiments, 2)                    # 真模型打的分
-    return {
+    result = {
         "text": req.text,
         "score": score,
         "label": score_label(score),
         "pinyin": " ".join(lazy_pinyin(text, style=Style.TONE)),  # 真拼音，带声调
+        "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),  # ← 新增
     }
+
+    save_record(result)                                                          # ← 存档到文件
+    return result
+
+@app.get("/api/history")
+def history():
+    return get_history(2)
+
 
